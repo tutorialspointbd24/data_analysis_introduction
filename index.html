@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
+  <title>Data Analysis with Excel — Complete Guide</title>
+  <link rel="icon" type="image/x-icon" href="icon.png"> 
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #f0fdf4;
+      --deck-bg-1: #ffffff;
+      --deck-bg-2: #f0fdf4;
+      --surface: #ffffff;
+      --surface-strong: rgba(22, 163, 74, .08);
+      --border: rgba(22, 163, 74, .18);
+      --border-strong: rgba(22, 163, 74, .35);
+      --text: #1e293b;
+      --text-dim: #334155;
+      --text-faint: #16a34a;
+      --accent: #16a34a;
+      --accent-2: #15803d;
+      --accent-bright: #166534;
+      --code-bg: #0f172a;
+      --code-text: #e2e8f0;
+      --str: #86efac;
+      --kw: #fcd34d;
+      --fn: #93c5fd;
+      --num: #fcd34d;
+      --cm: #94a3b8;
+      --ok: #16a34a;
+      --bad: #dc2626;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; width: 100%; }
+
+    body {
+      background: radial-gradient(1000px 600px at 90% -10%, rgba(22,163,74,.08), transparent 60%),
+                  radial-gradient(800px 600px at -10% 110%, rgba(22,163,74,.06), transparent 55%),
+                  var(--bg);
+      color: var(--text);
+      font-family: 'Inter', 'Space Grotesk', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .viewport {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .deck {
+      position: relative;
+      width: min(95vw, 170vh);
+      aspect-ratio: 16 / 9;
+      background: linear-gradient(150deg, var(--deck-bg-1), var(--deck-bg-2));
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 25px 60px rgba(22,163,74,.12), 0 0 0 1px rgba(255,255,255,.6) inset;
+    }
+
+    .deck:fullscreen {
+      width: 100vw;
+      aspect-ratio: auto;
+      height: 100vh;
+      border-radius: 0;
+    }
+
+    .grain {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+      background-image: radial-gradient(rgba(22,163,74,.04) 1px, transparent 1px);
+      background-size: 3px 3px;
+      opacity: .4;
+    }
+
+    #slideMount {
+      position: absolute;
+      inset: 0;
+      transition: opacity .2s ease, transform .2s ease;
+      z-index: 2;
+    }
+
+    #slideMount.is-leaving {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    #slideMount.is-entering {
+      animation: slideIn .25s ease;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      padding: clamp(18px, 3.2vw, 38px) clamp(22px, 4.5vw, 50px);
+      z-index: 2;
+      overflow-y: auto;
+      color: var(--text);
+    }
+
+    .kicker-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: clamp(6px, 1vw, 12px);
+      flex-shrink: 0;
+    }
+
+    .slide-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      background: linear-gradient(150deg, var(--accent), var(--accent-2));
+      box-shadow: 0 8px 18px rgba(22,163,74,.3);
+      flex-shrink: 0;
+    }
+
+    .kicker {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: clamp(10px, 1vw, 12.5px);
+      font-weight: 700;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--accent-2);
+    }
+
+    h1.slide-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: clamp(22px, 2.6vw, 34px);
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin-bottom: clamp(4px, 0.8vw, 8px);
+      color: var(--text);
+      flex-shrink: 0;
+    }
+
+    .slide-subtitle {
+      color: var(--text-dim);
+      font-size: clamp(12px, 1.15vw, 15.5px);
+      max-width: 72ch;
+      margin-bottom: clamp(6px, 0.8vw, 10px);
+      line-height: 1.5;
+      flex-shrink: 0;
+    }
+
+    .slide-body {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      gap: 10px;
+      overflow-y: auto;
+    }
+
+    .code {
+      background: var(--code-bg);
+      border: 1px solid var(--border-strong);
+      border-radius: 10px;
+      padding: clamp(10px, 1.3vw, 14px) clamp(12px, 1.8vw, 18px);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: clamp(11px, 1vw, 13.5px);
+      line-height: 1.6;
+      color: var(--code-text);
+      overflow: auto;
+      white-space: pre;
+      box-shadow: 0 10px 20px rgba(22,163,74,.12);
+      flex-shrink: 0;
+      max-height: 42vh;
+    }
+    .code .str { color: var(--str); }
+    .code .kw { color: var(--kw); }
+    .code .fn { color: var(--fn); }
+    .code .num { color: var(--num); }
+    .code .cm { color: var(--cm); font-style: italic; }
+
+    .note {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      background: #f0fdf4;
+      border: 1.5px solid var(--border);
+      border-left: 5px solid var(--accent);
+      border-radius: 8px;
+      padding: 9px 14px;
+      font-size: clamp(11px, 1vw, 14px);
+      color: var(--text-dim);
+      flex-shrink: 0;
+    }
+    .note b { color: var(--accent-2); font-weight: 700; }
+
+    .cols {
+      display: grid;
+      gap: 12px;
+    }
+    .cols-2 { grid-template-columns: 1fr 1fr; }
+    .cols-3 { grid-template-columns: repeat(3, 1fr); }
+    .cols-4 { grid-template-columns: repeat(4, 1fr); }
+
+    .panel {
+      background: #ffffff;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: clamp(10px, 1.3vw, 16px);
+      box-shadow: 0 4px 12px rgba(22,163,74,.04);
+    }
+    .panel h4 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13.5px;
+      margin-bottom: 6px;
+      color: var(--accent-2);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 700;
+    }
+    .panel p, .panel li {
+      color: var(--text-dim);
+      font-size: clamp(11px, 0.95vw, 13px);
+      line-height: 1.5;
+    }
+    .panel ul { padding-left: 18px; }
+    .panel .cap {
+      margin-top: 5px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--text-faint);
+    }
+
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      flex-shrink: 0;
+    }
+    .chip {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #ffffff;
+      border: 1.5px solid var(--border-strong);
+      color: var(--accent-2);
+      font-weight: 600;
+    }
+
+    .step {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+    .step .num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      width: 26px;
+      height: 26px;
+      border-radius: 7px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #ffffff;
+      border: 1.5px solid var(--border-strong);
+      font-weight: 700;
+      color: var(--accent-2);
+    }
+    .step p {
+      color: var(--text-dim);
+      font-size: clamp(11px, 1vw, 13.5px);
+      line-height: 1.5;
+      padding-top: 2px;
+    }
+    .step b { color: var(--text); }
+
+    .title-hero {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      flex: 1;
+      gap: 12px;
+    }
+    .title-hero .big-icon {
+      width: 58px;
+      height: 58px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      background: linear-gradient(150deg, var(--accent), var(--accent-2));
+      box-shadow: 0 14px 30px rgba(22,163,74,.35);
+    }
+    .title-hero h1 { font-size: clamp(28px, 4.2vw, 44px); }
+
+    .agenda-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #ffffff;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 9px 15px;
+    }
+    .agenda-item .idx {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--accent-2);
+      font-size: 12px;
+      font-weight: 700;
+      width: 24px;
+    }
+    .agenda-item .txt b {
+      display: block;
+      font-size: 13px;
+      color: var(--text);
+      font-family: 'Space Grotesk', sans-serif;
+    }
+    .agenda-item .txt span {
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    .practice-box {
+      background: #f0fdf4;
+      border: 1.5px dashed var(--border-strong);
+      border-radius: 10px;
+      padding: 12px 16px;
+    }
+
+    .badge {
+      display: inline-flex;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 600;
+    }
+    .badge.green { background: rgba(22,163,74,.12); color: #166534; }
+    .badge.blue { background: rgba(37,99,235,.12); color: #1e40af; }
+    .badge.amber { background: rgba(217,119,6,.12); color: #92400e; }
+
+    .excel-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .excel-table th {
+      background: linear-gradient(120deg, rgba(22,163,74,.12), rgba(22,163,74,.05));
+      padding: 5px 8px;
+      text-align: left;
+      font-weight: 700;
+      color: var(--accent-2);
+    }
+    .excel-table td {
+      padding: 4px 8px;
+      border-top: 1px solid rgba(22,163,74,.06);
+    }
+    .excel-table tr:nth-child(even) { background: rgba(22,163,74,.015); }
+
+    .chrome {
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px clamp(12px, 2.2vw, 24px);
+      z-index: 5;
+      background: rgba(255,255,255,.7);
+      backdrop-filter: blur(4px);
+      border-top: 1px solid var(--border);
+    }
+    .seg-bar {
+      display: flex;
+      gap: 4px;
+      flex: 1;
+    }
+    .seg {
+      height: 3px;
+      border-radius: 4px;
+      background: rgba(22,163,74,.08);
+      flex: 1;
+      transition: all .3s ease;
+    }
+    .seg.done { background: var(--accent-2); }
+    .seg.active {
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      box-shadow: 0 0 6px rgba(22,163,74,.4);
+    }
+    .seg-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-dim);
+      min-width: 60px;
+    }
+    .counter {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      font-weight: 600;
+      color: var(--text-dim);
+      letter-spacing: .04em;
+      white-space: nowrap;
+    }
+    .counter b { color: var(--accent-2); }
+
+    .nav-btns {
+      position: absolute;
+      z-index: 6;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+    .nav-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.75);
+      backdrop-filter: blur(5px);
+      border: 1px solid var(--border);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all .2s ease;
+      box-shadow: 0 4px 12px rgba(22,163,74,.06);
+    }
+    .nav-btn:hover {
+      background: rgba(22,163,74,.12);
+      border-color: var(--border-strong);
+      transform: scale(1.05);
+    }
+    .nav-btn:active { transform: scale(.95); }
+    .nav-btn.disabled { opacity: .2; pointer-events: none; }
+    .nav-left { left: 8px; }
+    .nav-right { right: 8px; }
+
+    .top-controls {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      z-index: 6;
+      display: flex;
+      gap: 5px;
+    }
+    .icon-btn {
+      width: 26px;
+      height: 26px;
+      border-radius: 7px;
+      background: rgba(255,255,255,.7);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all .2s ease;
+    }
+    .icon-btn:hover {
+      color: var(--text);
+      border-color: var(--border-strong);
+      background: rgba(22,163,74,.12);
+    }
+
+    .excel-fn {
+      font-family: 'JetBrains Mono', monospace;
+      background: rgba(22,163,74,.08);
+      padding: 2px 8px;
+      border-radius: 4px;
+      color: var(--accent-2);
+      font-weight: 600;
+      font-size: 11px;
+    }
+
+    @media (max-width: 720px) {
+      .cols-2, .cols-3, .cols-4 { grid-template-columns: 1fr; }
+      .seg-label { display: none; }
+      .nav-btn { width: 26px; height: 26px; }
+    }
+  </style>
+</head>
+<body>
+<div class="viewport">
+  <div class="deck" id="deck">
+    <div class="grain"></div>
+    <div id="slideMount"></div>
+    <div class="nav-btns nav-left"><button class="nav-btn" id="prevBtn" aria-label="Previous">‹</button></div>
+    <div class="nav-btns nav-right"><button class="nav-btn" id="nextBtn" aria-label="Next">›</button></div>
+    <div class="top-controls"><button class="icon-btn" id="fsBtn" title="Fullscreen">⤢</button></div>
+    <div class="chrome">
+      <div class="seg-label" id="segLabel">Start</div>
+      <div class="seg-bar" id="segBar"></div>
+      <div class="counter"><b id="curNum">01</b> / <span id="totalNum">22</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    function esc(s) {
+      return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+    function rcode(raw) {
+      var s = esc(raw);
+      s = s.replace(/(#.*$)/gm, '<span class="cm">$1</span>');
+      s = s.replace(/"([^"]*)"/g, '<span class="str">"$1"</span>');
+      s = s.replace(/\b(TRUE|FALSE|NULL|NA|Inf|NaN)\b/g, '<span class="kw">$1</span>');
+      s = s.replace(/\b(SUM|AVERAGE|COUNT|COUNTA|MAX|MIN|IF|VLOOKUP|HLOOKUP|INDEX|MATCH|ROUND|ROUNDUP|ROUNDDOWN|ABS|SQRT|POWER|LOG|EXP|DATE|DAY|MONTH|YEAR|TODAY|NOW|LEFT|RIGHT|MID|LEN|TRIM|CONCATENATE|FIND|SEARCH|SUBSTITUTE|UPPER|LOWER|PROPER|COUNTIF|SUMIF|AVERAGEIF|COUNTIFS|SUMIFS|AVERAGEIFS|PMT|FV|PV|RATE|NPER|CORREL|STDEV|STDEVP|VAR|VARP|MEDIAN|MODE|QUARTILE|PERCENTILE|RANK|LARGE|SMALL|FREQUENCY|TRANSPOSE|OFFSET|INDIRECT|ADDRESS|ROW|COLUMN|ROWS|COLUMNS|SUBTOTAL|AGGREGATE|FILTER|SORT|UNIQUE|SEQUENCE|RAND|RANDBETWEEN|XLOOKUP|XMATCH|LET|LAMBDA|ISNUMBER|ISTEXT|ISBLANK|ISERROR|IFERROR|IFNA|AND|OR|NOT|CHOOSE|SWITCH|TEXT|VALUE|NUMBERVALUE|ISOWEEKNUM|WEEKNUM|WORKDAY|NETWORKDAYS|EOMONTH|EDATE|DATEDIF|DAYS|DAYS360|TIME|HOUR|MINUTE|SECOND)\b/g, '<span class="fn">$1</span>');
+      s = s.replace(/(?<![a-zA-Z_])(\d+\.?\d*)/g, '<span class="num">$1</span>');
+      return '<div class="code">' + s + '</div>';
+    }
+
+    var SECTIONS = ["Intro", "Ask", "Collect", "Clean", "Explore", "Model", "Communicate", "Practice"];
+    var slides = [
+      // 0 - Welcome
+      {
+        section: 0, kicker: "EXCEL DATA ANALYSIS · COMPLETE GUIDE", icon: "📊", hero: true,
+        title: "Data Analysis with Excel",
+        body: '<div class="title-hero"><div class="big-icon">📊</div><div><h1>Data Analysis with Excel</h1><p class="slide-subtitle" style="margin-top:6px;max-width:65ch;"><b>Turning raw data into actionable insights</b> — from asking the right questions to making data-driven decisions — all using Microsoft Excel.</p></div><div class="cols cols-4"><div style="text-align:center;"><span class="badge blue" style="font-size:12px;padding:5px 12px;">Ask</span></div><div style="text-align:center;"><span class="badge green" style="font-size:12px;padding:5px 12px;">Collect</span></div><div style="text-align:center;"><span class="badge amber" style="font-size:12px;padding:5px 12px;">Analyze</span></div><div style="text-align:center;"><span class="badge blue" style="font-size:12px;padding:5px 12px;">Present</span></div></div><div class="chip-row"><span class="chip">Excel Tables</span><span class="chip">Formulas</span><span class="chip">PivotTables</span><span class="chip">Charts</span><span class="chip">Power Query</span><span class="chip">Dashboard</span></div></div>'
+      },
+      // 1 - What is Data Analysis?
+      {
+        section: 0, kicker: "INTRODUCTION", icon: "🧭",
+        title: "What is Data Analysis?",
+        body: '<p class="slide-subtitle"><b style="color:var(--accent-bright)">Data analysis</b> is the process of inspecting, cleaning, transforming, and modeling data to discover useful information and support decision-making.</p><div class="cols cols-2"><div class="panel"><h4>🔍 Why Do It?</h4><ul><li>Support decision-making</li><li>Discover patterns and trends</li><li>Make predictions</li><li>Business intelligence</li><li>Improve efficiency</li></ul></div><div class="panel"><h4>📋 The 6-Step Process</h4><ol><li><b>Ask</b> — What do you want to know?</li><li><b>Collect</b> — Where is the data?</li><li><b>Clean</b> — Prepare the data</li><li><b>Explore</b> — Find patterns</li><li><b>Model</b> — Build relationships</li><li><b>Communicate</b> — Share results</li></ol></div></div><div class="note">📌 <b>Excel</b> is one of the most widely used tools for data analysis — accessible, powerful, and versatile.</div>'
+      },
+      // 2 - Ask Questions
+      {
+        section: 1, kicker: "STEP 1", icon: "❓",
+        title: "1. Ask the Right Questions",
+        body: '<p class="slide-subtitle">Everything starts with <b style="color:var(--accent-bright)">asking the right question</b>. A good question leads to a good analysis.</p><div class="cols cols-2"><div class="panel"><h4>❌ Bad Questions</h4><ul><li>"What does the data look like?"</li><li>"How are sales?"</li><li>"What is happening?"</li></ul></div><div class="panel"><h4>✅ Good Questions</h4><ul><li>"Which product category had the highest sales growth in Q3?"</li><li>"Which customer segment is most profitable?"</li><li>"How does seasonality affect sales?"</li></ul></div></div>' + rcode('# SMART Question Framework (Excel version)\n# Specific — clear and focused\n# Measurable — quantifiable with numbers\n# Achievable — feasible with available data\n# Relevant — important to the problem\n# Time-bound — has a timeline\n\n# Example:\n# "Which region had the highest revenue growth in 2024?"\n# You can answer this with Excel PivotTables!') + '<div class="note">📌 Your <b>research question</b> determines what data you need, which Excel tools to use, and how to interpret results.</div>'
+      },
+      // 3 - Collect Data
+      {
+        section: 2, kicker: "STEP 2", icon: "📥",
+        title: "2. Collect Data",
+        body: '<p class="slide-subtitle">Gather the <b style="color:var(--accent-bright)">necessary data</b> to answer your question.</p><div class="cols cols-3"><div class="panel"><h4>📁 Sources</h4><ul><li>CSV / Excel files</li><li>Text files (Tab-delimited)</li><li>Web (copy-paste)</li><li>Database exports</li><li>Power Query (Get & Transform)</li><li>External data connections</li></ul></div><div class="panel"><h4>📂 Import Methods</h4><ul><li><b>File → Open</b> (CSV, TXT)</li><li><b>Data → From Text/CSV</b></li><li><b>Data → From Web</b></li><li><b>Data → From Database</b></li><li><b>Copy-paste</b> from other sources</li></ul></div><div class="panel"><h4>⚖️ Ethics</h4><ul><li>User consent</li><li>Privacy protection</li><li>Data fairness</li><li>Bias checking</li><li>Compliance with laws</li></ul></div></div>' + rcode('# Excel Shortcuts for Data Import\n# Ctrl + O : Open file\n# Ctrl + C : Copy data\n# Ctrl + V : Paste data\n# Alt + D, B : From Text/CSV\n# Alt + D, W : From Web\n\n# Best Practice:\n# Always keep raw data in a separate sheet!\n# Name it "Raw_Data" or "Source"') + '<div class="note">📌 Always <b>document the source, collection method, and limitations</b> of your data in a separate sheet.</div>'
+      },
+      // 4 - Clean Data
+      {
+        section: 3, kicker: "STEP 3", icon: "🧹",
+        title: "3. Clean Data (Data Cleaning)",
+        body: '<p class="slide-subtitle">Cleaning is the <b style="color:var(--accent-bright)">most time-consuming</b> but most important step.</p><div class="cols cols-2"><div class="panel"><h4>🧽 Common Issues</h4><ul><li><b>Missing values</b> (blank cells)</li><li><b>Duplicate</b> rows</li><li><b>Outliers</b></li><li><b>Inconsistent</b> formatting</li><li><b>Wrong</b> data types (numbers as text)</li></ul></div><div class="panel"><h4>✅ Excel Solutions</h4><ul><li><span class="excel-fn">Go To Special</span> → Blanks</li><li><span class="excel-fn">Remove Duplicates</span></li><li><span class="excel-fn">Conditional Formatting</span></li><li><span class="excel-fn">Text to Columns</span></li><li><span class="excel-fn">VALUE()</span> to convert text to numbers</li></ul></div></div>' + rcode('# Excel Functions for Cleaning\n# =TRIM(A2)           -> Remove extra spaces\n# =UPPER(A2)          -> Convert to uppercase\n# =PROPER(A2)         -> Proper case (first letter capital)\n# =CLEAN(A2)          -> Remove non-printable characters\n# =SUBSTITUTE(A2,"-","")  -> Replace characters\n# =IF(ISBLANK(A2), "N/A", A2)  -> Handle blanks\n# =IF(ISERROR(VALUE(A2)), A2, VALUE(A2))  -> Fix numbers stored as text\n\n# Keyboard Shortcuts:\n# Ctrl + H : Find & Replace\n# Alt + A, M : Remove Duplicates') + '<div class="note">📌 <b>"Garbage in, garbage out"</b> — no amount of analysis can fix bad data. Always work on a copy!</div>'
+      },
+      // 5 - Data Transformation
+      {
+        section: 3, kicker: "STEP 3", icon: "🔧",
+        title: "Data Transformation",
+        body: '<p class="slide-subtitle">Transform data into <b style="color:var(--accent-bright)">the right shape</b> for analysis.</p><div class="cols cols-3"><div class="panel"><h4>🔄 Pivoting</h4><ul><li><b>PivotTable</b> — summarize data</li><li><b>Power Query</b> — unpivot columns</li><li><b>TRANSPOSE</b> — switch rows/columns</li></ul></div><div class="panel"><h4>✂️ Split / Combine</h4><ul><li><b>Text to Columns</b> — split one column</li><li><b>CONCATENATE</b> / <b>TEXTJOIN</b> — combine</li><li><b>LEFT, RIGHT, MID</b> — extract text</li></ul></div><div class="panel"><h4>🏷️ Recoding</h4><ul><li><b>IF</b> — conditional values</li><li><b>IFS</b> — multiple conditions</li><li><b>VLOOKUP</b> / <b>XLOOKUP</b> — map values</li><li><b>SWITCH</b> — alternative to nested IF</li></ul></div></div>' + rcode('# Excel Functions for Transformation\n# =CONCATENATE(A2, " ", B2)  -> Combine columns\n# =TEXTJOIN(", ", TRUE, A2:C2)  -> Join with delimiter\n# =LEFT(A2, 5)  -> Extract first 5 characters\n# =RIGHT(A2, 5)  -> Extract last 5 characters\n# =MID(A2, 3, 5)  -> Extract from position 3, length 5\n# =VLOOKUP(value, table, col_index, FALSE)  -> Lookup values\n# =XLOOKUP(value, lookup_array, return_array)  -> Modern lookup\n# =IF(A2>100, "High", "Low")  -> Conditional recoding') + '<div class="note">📌 Use <b>Power Query (Get & Transform)</b> for complex transformations — it\'s a game-changer!</div>'
+      },
+      // 6 - Outlier Detection
+      {
+        section: 3, kicker: "STEP 3", icon: "🔍",
+        title: "Outlier Detection & Handling",
+        body: '<div class="cols cols-2"><div class="panel"><h4>📊 Visualization</h4><ul><li><b>Box & Whisker</b> chart</li><li><b>Scatter plot</b> — unusual points</li><li><b>Histogram</b> — distribution</li><li><b>Conditional Formatting</b> — highlight extremes</li></ul></div><div class="panel"><h4>📐 Statistical</h4><ul><li><b>Z-score</b> — 3 standard deviations</li><li><b>IQR</b> — Q1 - 1.5*IQR & Q3 + 1.5*IQR</li><li><b>PERCENTILE</b> — find quartiles</li></ul></div></div>' + rcode('# Excel Functions for Outlier Detection\n# =AVERAGE(range)     -> Mean\n# =STDEV.S(range)     -> Sample standard deviation\n# =STDEV.P(range)     -> Population standard deviation\n# =QUARTILE.INC(range, 1)  -> Q1 (25th percentile)\n# =QUARTILE.INC(range, 3)  -> Q3 (75th percentile)\n# =PERCENTILE.INC(range, 0.25)  -> Alternative for Q1\n# =PERCENTILE.INC(range, 0.75)  -> Alternative for Q3\n\n# Z-score formula: =(value - AVERAGE(range)) / STDEV.S(range)\n# IQR formula: =Q3 - Q1\n# Lower bound: =Q1 - 1.5 * IQR\n# Upper bound: =Q3 + 1.5 * IQR') + '<div class="note">📌 You can use <b>Conditional Formatting → Highlight Cell Rules → Greater Than</b> to visually identify outliers.</div>'
+      },
+      // 7 - EDA
+      {
+        section: 4, kicker: "STEP 4", icon: "📈",
+        title: "4. Exploratory Data Analysis (EDA)",
+        body: '<p class="slide-subtitle">EDA helps you <b style="color:var(--accent-bright)">understand the data</b> — its structure, patterns, and anomalies.</p><div class="cols cols-3"><div class="panel"><h4>📊 Visual</h4><ul><li>Histogram — distribution</li><li>Box plot — outliers</li><li>Scatter plot — relationships</li><li>Bar chart — categories</li><li>Line chart — trends</li></ul></div><div class="panel"><h4>📐 Statistical</h4><ul><li><b>AVERAGE</b> — mean</li><li><b>MEDIAN</b></li><li><b>STDEV.S</b> — std dev</li><li><b>CORREL</b> — correlation</li><li><b>SKEW</b> — skewness</li></ul></div><div class="panel"><h4>🔍 Patterns</h4><ul><li>Missing values pattern</li><li>Outlier detection</li><li>Distribution shape</li><li>Trend over time</li><li>Group differences</li></ul></div></div>' + rcode('# Excel Functions for EDA\n# =SUM(range)         -> Total\n# =AVERAGE(range)     -> Mean\n# =MEDIAN(range)      -> Median\n# =STDEV.S(range)     -> Sample standard deviation\n# =VAR.S(range)       -> Sample variance\n# =MIN(range)         -> Minimum\n# =MAX(range)         -> Maximum\n# =COUNT(range)       -> Count numeric values\n# =COUNTA(range)      -> Count all values\n# =CORREL(range1, range2)  -> Correlation coefficient\n# =QUARTILE.INC(range, 0.5)  -> Median (same as 50th percentile)\n\n# Use PivotTables to explore group differences quickly!') + '<div class="note">📌 The goal of EDA — <b>find patterns</b>, <b>detect anomalies</b>, and <b>plan next steps</b>. Use <b>PivotTables</b> for fast group summaries.</div>'
+      },
+      // 8 - Visualization
+      {
+        section: 4, kicker: "STEP 4", icon: "📊",
+        title: "Visualization — The Language of Data",
+        body: '<p class="slide-subtitle">A picture is worth <b style="color:var(--accent-bright)">a thousand data points</b>.</p><div class="cols cols-2"><div class="panel"><h4>📈 Common Chart Types</h4><ul><li><b>Column/Bar</b> — compare categories</li><li><b>Line</b> — show trends over time</li><li><b>Pie</b> — show proportions</li><li><b>Scatter</b> — show relationships</li><li><b>Histogram</b> — show distribution</li><li><b>Box & Whisker</b> — show spread & outliers</li></ul></div><div class="panel"><h4>🎨 Best Practices</h4><ul><li>Choose the right chart type</li><li>Add clear titles and labels</li><li>Use appropriate colors</li><li>Avoid 3D effects</li><li>Add data labels when useful</li><li>Use <b>Recommended Charts</b> for ideas</li></ul></div></div>' + rcode('# Excel Chart Shortcuts\n# Alt + F1         -> Quick chart from selected data\n# F11              -> Create chart in a new sheet\n# Ctrl + 1         -> Format selected chart element\n# Alt + J, C, A    -> Insert Column Chart\n# Alt + J, C, L    -> Insert Line Chart\n# Alt + J, C, P    -> Insert Pie Chart\n\n# Quick Analysis Tool:\n# Select data → Click the Quick Analysis icon (bottom-right)\n# Choose Charts, Formatting, Totals, Tables, or Sparklines') + '<div class="note">📌 <b>Sparklines</b> (mini charts inside cells) are great for showing trends without taking up much space.</div>'
+      },
+      // 9 - Statistical Summary with Excel
+      {
+        section: 4, kicker: "STEP 4", icon: "📉",
+        title: "Statistical Summary in Excel",
+        body: '<div class="cols cols-2"><div class="panel"><h4>📐 Central Tendency</h4><ul><li><b>=AVERAGE()</b> — mean</li><li><b>=MEDIAN()</b> — middle value</li><li><b>=MODE.SNGL()</b> — most frequent</li></ul></div><div class="panel"><h4>📏 Spread</h4><ul><li><b>=STDEV.S()</b> — std deviation</li><li><b>=QUARTILE.INC()</b> — IQR</li><li><b>=MAX() - MIN()</b> — range</li></ul></div></div>' + rcode('# Excel Descriptive Statistics (Data Analysis Toolpak)\n# 1. Go to Data → Data Analysis\n# 2. Select "Descriptive Statistics"\n# 3. Select input range\n# 4. Check "Summary statistics"\n# 5. Click OK\n\n# Output includes:\n# Mean, Standard Error, Median, Mode, Standard Deviation\n# Sample Variance, Kurtosis, Skewness, Range, Minimum, Maximum\n# Sum, Count, Confidence Level\n\n# Manually:\n# =AVERAGE(A2:A100)\n# =MEDIAN(A2:A100)\n# =STDEV.S(A2:A100)\n# =VAR.S(A2:A100)\n# =SKEW(A2:A100)\n# =KURT(A2:A100)') + '<div class="note">📌 <b>Data Analysis Toolpak</b> must be enabled: File → Options → Add-ins → Manage: Excel Add-ins → Check "Analysis ToolPak"</div>'
+      },
+      // 10 - PivotTables
+      {
+        section: 4, kicker: "STEP 4", icon: "📊",
+        title: "PivotTables — The Excel Superpower",
+        body: '<p class="slide-subtitle"><b style="color:var(--accent-bright)">PivotTables</b> are Excel\'s most powerful tool for summarizing, analyzing, and exploring data.</p><div class="cols cols-2"><div class="panel"><h4>📌 How to Create</h4><ul><li>Select your data range</li><li>Insert → PivotTable</li><li>Drag fields to areas:</li><ul><li><b>Rows</b> — categories</li><li><b>Columns</b> — secondary grouping</li><li><b>Values</b> — numbers to summarize</li><li><b>Filters</b> — focus on subsets</li></ul></ul></div><div class="panel"><h4>🎯 What You Can Do</h4><ul><li>Sum, Average, Count, Max, Min</li><li>% of total, % of row/column</li><li>Rank, Difference from previous</li><li>Running total</li><li>Filter with Slicers</li><li>Create PivotCharts</li></ul></div></div>' + rcode('# PivotTable Keyboard Shortcuts\n# Alt + N, V, T    -> Insert PivotTable\n# Alt + F1         -> Create PivotChart\n# Alt + J, T, C, A -> Show Field List\n# Alt + J, T, C, D -> Show PivotTable Options\n\n# Common Value Field Settings:\n# Right-click a value → Value Field Settings\n# Choose: Sum, Count, Average, Max, Min, Product\n# Show values as: % of Grand Total, % of Row, % of Column, Running Total') + '<div class="note">📌 <b>Slicers</b> make PivotTables interactive — great for dashboards!</div>'
+      },
+      // 11 - Statistical Modeling
+      {
+        section: 5, kicker: "STEP 5", icon: "🧮",
+        title: "5. Statistical Modeling in Excel",
+        body: '<p class="slide-subtitle">Use models to find <b style="color:var(--accent-bright)">relationships and patterns</b> in your data.</p><div class="cols cols-3"><div class="panel"><h4>📈 Regression</h4><ul><li><b>Linear Regression</b> — Data Analysis Toolpak</li><li><b>Trendline</b> on charts</li><li><b>FORECAST.LINEAR</b> — predict values</li></ul></div><div class="panel"><h4>📊 What-If Analysis</h4><ul><li><b>Goal Seek</b> — find input for desired output</li><li><b>Solver</b> — optimize with constraints</li><li><b>Data Tables</b> — sensitivity analysis</li></ul></div><div class="panel"><h4>📐 Correlation</h4><ul><li><b>=CORREL()</b> — correlation coefficient</li><li><b>Scatter plots</b> with trendlines</li><li><b>R² value</b> — goodness of fit</li></ul></div></div>' + rcode('# Linear Regression in Excel\n# 1. Data → Data Analysis → Regression\n# 2. Input Y Range (dependent variable)\n# 3. Input X Range (independent variable)\n# 4. Check: Labels, Confidence Level, Residuals\n# 5. Click OK\n\n# Output includes:\n# R Square, Adjusted R Square, Standard Error\n# Coefficients, t-stat, p-values\n# ANOVA table\n\n# FORECAST Functions:\n# =FORECAST.LINEAR(x, known_y, known_x)  -> Predict y from x\n# =TREND(known_y, known_x, new_x)  -> Multiple regression') + '<div class="note">📌 The <b>Regression</b> tool is in the Data Analysis Toolpak. Enable it via File → Options → Add-ins.</div>'
+      },
+      // 12 - Hypothesis Testing
+      {
+        section: 5, kicker: "STEP 5", icon: "⚖️",
+        title: "Hypothesis Testing in Excel",
+        body: '<p class="slide-subtitle">Use statistical tests to <b style="color:var(--accent-bright)">validate assumptions</b>.</p><div class="cols cols-2"><div class="panel"><h4>🧪 Common Tests</h4><ul><li><b>t-Test</b> — compare two groups</li><li><b>ANOVA</b> — compare >2 groups</li><li><b>Chi-square</b> — categorical data</li><li><b>F-Test</b> — compare variances</li></ul></div><div class="panel"><h4>📌 Concepts</h4><ul><li><b>Null (H₀)</b> — no effect</li><li><b>Alternative (H₁)</b> — effect exists</li><li><b>p-value</b> — < 0.05 = significant</li><li><b>Confidence Interval</b> — 95% range</li></ul></div></div>' + rcode('# How to run t-Test in Excel\n# 1. Data → Data Analysis → t-Test\n# 2. Choose: Paired, Two-Sample Equal Variance, or Two-Sample Unequal Variance\n# 3. Select Variable 1 and Variable 2 ranges\n# 4. Set Hypothesized Mean Difference (usually 0)\n# 5. Check Labels and set Alpha (0.05)\n# 6. Click OK\n\n# Output includes:\n# t-stat, df (degrees of freedom)\n# P(T<=t) one-tail, P(T<=t) two-tail\n# t Critical one-tail, t Critical two-tail\n\n# ANOVA (One-Way): Data → Data Analysis → ANOVA: Single Factor') + '<div class="note">📌 A small <b>p-value</b> (less than 0.05) means you can reject the null hypothesis.</div>'
+      },
+      // 13 - Communicate Results
+      {
+        section: 6, kicker: "STEP 6", icon: "📢",
+        title: "6. Communicate Results",
+        body: '<p class="slide-subtitle">Present your findings <b style="color:var(--accent-bright)">clearly and effectively</b> to your audience.</p><div class="cols cols-3"><div class="panel"><h4>📊 Visuals</h4><ul><li>Clear, accurate charts</li><li>Appropriate color schemes</li><li>Labels and titles</li><li>Highlight key takeaways</li></ul></div><div class="panel"><h4>📝 Reports</h4><ul><li>Print-ready Excel sheets</li><li>Dashboard with slicers</li><li>PowerPoint integration</li><li>PDF export</li></ul></div><div class="panel"><h4>🎤 Presentation</h4><ul><li>Story format</li><li>Question → Answer → Recommendation</li><li>Visual + explanation</li><li>Know your audience</li></ul></div></div>' + rcode('# Excel Tips for Communication\n# 1. Hide gridlines: View → Show → Gridlines (uncheck)\n# 2. Use the same font throughout\n# 3. Align text and numbers properly\n# 4. Use colors sparingly (2-3 colors max)\n# 5. Add a title to every sheet\n# 6. Use comments to explain complex formulas\n# 7. Protect sheets to prevent accidental changes\n\n# Export Options:\n# File → Save As → PDF\n# File → Print → Print to PDF\n# Copy charts → Paste to PowerPoint') + '<div class="note">📌 A <b>good presentation</b> makes complex results simple, understandable, and engaging.</div>'
+      },
+      // 14 - Dashboards
+      {
+        section: 6, kicker: "STEP 6", icon: "📋",
+        title: "Dashboards in Excel",
+        body: '<p class="slide-subtitle">Interactive dashboards let you <b style="color:var(--accent-bright)">monitor data in real-time</b>.</p><div class="cols cols-2"><div class="panel"><h4>🛠️ Dashboard Components</h4><ul><li><b>PivotTables</b> — data summaries</li><li><b>PivotCharts</b> — visual summaries</li><li><b>Slicers</b> — interactive filters</li><li><b>Timeline</b> — date filters</li><li><b>Form Controls</b> — dropdowns, checkboxes</li></ul></div><div class="panel"><h4>🎨 Design Tips</h4><ul><li>Use a clean, professional color scheme</li><li>Group related charts together</li><li>Add a title and company logo</li><li>Use consistent fonts and sizes</li><li>Add instructions for users</li><li>Use <b>Named Ranges</b> for easy updates</li></ul></div></div>' + rcode('# Steps to Create a Dashboard\n# 1. Set up data in a table format (Ctrl + T)\n# 2. Create PivotTables for each summary\n# 3. Insert PivotCharts for each PivotTable\n# 4. Add Slicers (Insert → Slicer)\n# 5. Connect all Slicers to all PivotTables\n# 6. Arrange on a dashboard sheet\n# 7. Hide gridlines (View → Gridlines)\n# 8. Add titles and labels\n\n# Slicer Connection:\n# Right-click Slicer → Report Connections\n# Check all PivotTables you want to control') + '<div class="note">📌 A well-designed dashboard is <b>self-explanatory</b> — users should understand it without any explanation.</div>'
+      },
+      // 15 - Power Query
+      {
+        section: 6, kicker: "STEP 6", icon: "⚡",
+        title: "Power Query — The Data Transformation Tool",
+        body: '<p class="slide-subtitle"><b style="color:var(--accent-bright)">Power Query</b> (Get & Transform) is Excel\'s powerful ETL (Extract, Transform, Load) tool.</p><div class="cols cols-2"><div class="panel"><h4>📥 What It Does</h4><ul><li>Import data from multiple sources</li><li>Merge and append tables</li><li>Transform data (pivot, unpivot, split, clean)</li><li>Automate repetitive tasks</li><li>Refresh with one click</li></ul></div><div class="panel"><h4>🛠️ Key Features</h4><ul><li><b>From Table/Range</b> — load existing data</li><li><b>Merge Queries</b> — VLOOKUP on steroids</li><li><b>Append Queries</b> — stack tables</li><li><b>Unpivot Columns</b> — wide to long format</li><li><b>M Language</b> — advanced transformations</li></ul></div></div>' + rcode('# Power Query Steps (Data → Get & Transform → From Table/Range)\n# 1. Select data → Data → From Table/Range\n# 2. Use the Query Editor to transform\n# 3. Common transformations:\n#    - Remove rows: Remove Top Rows, Remove Bottom Rows\n#    - Remove columns: Remove Other Columns\n#    - Split Column: By Delimiter, By Position\n#    - Change Type: Text, Whole Number, Decimal, Date\n#    - Replace Values: Find & Replace\n#    - Group By: Summarize data (like PivotTable)\n#    - Merge Queries: Join tables (like SQL JOIN)\n# 4. Close & Load → Load to: Table, PivotTable, or Connection Only\n\n# M Language Example (advanced):\n# let\n#   Source = Excel.CurrentWorkbook(){[Name="Table1"]}[Content],\n#   ChangedType = Table.TransformColumnTypes(Source,{{"Date", type date}})\n# in\n#   ChangedType') + '<div class="note">📌 <b>Power Query</b> saves hours of manual work — learn it, and you\'ll become a data hero!</div>'
+      },
+      // 16 - Excel Formulas Reference
+      {
+        section: 6, kicker: "STEP 6", icon: "📚",
+        title: "Essential Excel Formulas — Reference",
+        body: '<div class="cols cols-3"><div class="panel"><h4>📊 Summary</h4><ul><li><span class="excel-fn">=SUM()</span> — total</li><li><span class="excel-fn">=AVERAGE()</span> — mean</li><li><span class="excel-fn">=COUNT()</span> — numeric count</li><li><span class="excel-fn">=COUNTA()</span> — any value count</li><li><span class="excel-fn">=MAX()</span> — maximum</li><li><span class="excel-fn">=MIN()</span> — minimum</li></ul></div><div class="panel"><h4>🔍 Lookup</h4><ul><li><span class="excel-fn">=VLOOKUP()</span> — vertical lookup</li><li><span class="excel-fn">=XLOOKUP()</span> — modern lookup</li><li><span class="excel-fn">=INDEX()</span> — returns a value</li><li><span class="excel-fn">=MATCH()</span> — finds position</li></ul></div><div class="panel"><h4>🧮 Conditional</h4><ul><li><span class="excel-fn">=IF()</span> — conditional logic</li><li><span class="excel-fn">=SUMIF()</span> — conditional sum</li><li><span class="excel-fn">=COUNTIF()</span> — conditional count</li><li><span class="excel-fn">=AVERAGEIF()</span> — conditional average</li></ul></div></div><div class="cols cols-3"><div class="panel"><h4>📅 Date/Time</h4><ul><li><span class="excel-fn">=TODAY()</span> — current date</li><li><span class="excel-fn">=NOW()</span> — current date & time</li><li><span class="excel-fn">=DATE()</span> — create date</li><li><span class="excel-fn">=DATEDIF()</span> — difference</li></ul></div><div class="panel"><h4>📝 Text</h4><ul><li><span class="excel-fn">=LEFT()</span> — extract left</li><li><span class="excel-fn">=RIGHT()</span> — extract right</li><li><span class="excel-fn">=MID()</span> — extract middle</li><li><span class="excel-fn">=TRIM()</span> — remove spaces</li></ul></div><div class="panel"><h4>📈 Statistical</h4><ul><li><span class="excel-fn">=STDEV.S()</span> — std deviation</li><li><span class="excel-fn">=CORREL()</span> — correlation</li><li><span class="excel-fn">=QUARTILE()</span> — quartiles</li><li><span class="excel-fn">=PERCENTILE()</span> — percentiles</li></ul></div></div><div class="note">📌 <b>F1</b> opens Excel Help. <b>Ctrl + A</b> in a formula shows the Function Arguments dialog.</div>'
+      },
+      // 17 - Case Study
+      {
+        section: 6, kicker: "STEP 6", icon: "📋",
+        title: "Real-World Case Study — E-Commerce",
+        body: '<p class="slide-subtitle"><b style="color:var(--accent-bright)">An e-commerce company</b> wants to optimize its product categories.</p><div class="steps"><div class="step"><div class="num">1</div><p><b>Question:</b> "Which product category generates the highest profit margin?"</p></div><div class="step"><div class="num">2</div><p><b>Data:</b> 12 months of sales data in Excel (CSV).</p></div><div class="step"><div class="num">3</div><p><b>Clean:</b> Remove blanks, duplicates, fix date formats with <span class="excel-fn">DATEVALUE()</span>.</p></div><div class="step"><div class="num">4</div><p><b>Analyze:</b> Use <b>PivotTables</b> for total revenue, average order value, and profit margin by category.</p></div><div class="step"><div class="num">5</div><p><b>Visualize:</b> Create bar chart + line chart (monthly trends).</p></div><div class="step"><div class="num">6</div><p><b>Recommend:</b> "Invest more in Electronics; offer discounts on Clothing." Create a dashboard with slicers.</p></div></div><div class="note">📌 <b>Case studies</b> are the best way to learn — apply these steps to your own data.</div>'
+      },
+      // 18 - Best Practices
+      {
+        section: 6, kicker: "STEP 6", icon: "🏆",
+        title: "Best Practices in Excel",
+        body: '<div class="cols cols-2"><div class="panel"><h4>🔁 Reproducibility</h4><ul><li>Keep raw data in a separate sheet</li><li>Use formulas, not hard-coded values</li><li>Use <b>Named Ranges</b> for clarity</li><li>Document your work (add a "Notes" sheet)</li></ul></div><div class="panel"><h4>🧹 Data Hygiene</h4><ul><li>Never modify raw data</li><li>Work on copies</li><li>Use <b>Data Validation</b> to prevent errors</li><li>Keep a change log</li></ul></div></div><div class="cols cols-2"><div class="panel"><h4>📊 Visual Hygiene</h4><ul><li>Avoid misleading scales</li><li>Use colorblind-friendly palettes</li><li>Add titles and labels</li><li>Cite data sources</li></ul></div><div class="panel"><h4>⚖️ Ethics</h4><ul><li>Protect privacy</li><li>Check for bias</li><li>Present results honestly</li><li>Be ready to admit mistakes</li></ul></div></div><div class="note">📌 <b>Practice</b> and <b>feedback</b> are what make you a great data analyst.</div>'
+      },
+      // 19 - Learning Resources
+      {
+        section: 6, kicker: "STEP 6", icon: "📚",
+        title: "Learning Resources",
+        body: '<div class="cols cols-2"><div class="panel"><h4>📘 Books</h4><ul><li><b>Excel Data Analysis for Dummies</b></li><li><b>Power Excel with MrExcel</b></li><li><b>Excel 2019 Power Programming</b></li></ul></div><div class="panel"><h4>🌐 Online</h4><ul><li>Microsoft Excel Help</li><li>ExcelJet.net</li><li>Chandoo.org</li><li>MrExcel.com</li><li>LinkedIn Learning / Coursera</li></ul></div></div><div class="cols cols-2"><div class="panel"><h4>🧑‍🏫 Community</h4><ul><li>r/excel (Reddit)</li><li>Excel User Groups</li><li>Stack Overflow (excel tag)</li><li>YouTube (ExcelIsFun)</li></ul></div><div class="panel"><h4>🛠️ Practice Data</h4><ul><li>Kaggle (export as CSV)</li><li>Data.gov</li><li>World Bank data</li><li>Make your own!</li></ul></div></div><div class="note">📌 Start with <b>small projects</b> — each project adds a new skill.</div>'
+      },
+      // 20 - Key Takeaways
+      {
+        section: 7, kicker: "REVIEW", icon: "🎯",
+        title: "Key Takeaways",
+        body: '<div class="steps"><div class="step"><div class="num">1</div><p><b>Ask:</b> Ask SMART questions — Specific, Measurable, Achievable, Relevant, Time-bound.</p></div><div class="step"><div class="num">2</div><p><b>Collect:</b> Import data from CSV, text files, web, or databases.</p></div><div class="step"><div class="num">3</div><p><b>Clean:</b> Remove blanks, duplicates, fix formatting — use <span class="excel-fn">TRIM()</span>, <span class="excel-fn">CLEAN()</span>, <span class="excel-fn">VALUE()</span>.</p></div><div class="step"><div class="num">4</div><p><b>Explore:</b> Use <b>PivotTables</b>, charts, and summary functions like <span class="excel-fn">AVERAGE()</span>, <span class="excel-fn">STDEV()</span>.</p></div><div class="step"><div class="num">5</div><p><b>Model:</b> Use <b>Regression</b> (Data Analysis Toolpak), <span class="excel-fn">FORECAST()</span>, and <span class="excel-fn">CORREL()</span>.</p></div><div class="step"><div class="num">6</div><p><b>Communicate:</b> Create dashboards with <b>PivotCharts</b>, <b>Slicers</b>, and clean formatting.</p></div></div>'
+      },
+      // 21 - Practice
+      {
+        section: 7, kicker: "PRACTICE", icon: "🚀",
+        title: "Now You — Do It Yourself!",
+        body: '<p class="slide-subtitle">Follow these steps to <b style="color:var(--accent-bright)">analyze your own dataset</b> in Excel.</p><div class="practice-box"><div style="font-weight:700;margin-bottom:8px;">📋 Mini-Project Ideas:</div><ul style="margin-bottom:12px;padding-left:18px;"><li>Your reading log → which month did you read the most? (Use PivotTable)</li><li>Gym workout data → which exercise burns the most calories? (Use AVERAGEIF)</li><li>Mobile data usage → which app uses the most data? (Use SUMIF + charts)</li><li>Online shopping → which day do you shop the most? (Use COUNTIF + bar chart)</li></ul>' + rcode('# Your turn — Excel version:\n# 1. Open Excel and create or import data\n# 2. Clean it: Remove duplicates (Data → Remove Duplicates)\n# 3. Create a PivotTable to summarize the data\n# 4. Add a chart to visualize the results\n# 5. Create a simple dashboard with slicers\n# 6. Save and share!') + '</div><div class="note">📌 <b>The best way to learn is by doing.</b> Start, make mistakes, learn, and try again.</div>'
+      }
+    ];
+
+    var mount = document.getElementById('slideMount');
+    var curNum = document.getElementById('curNum');
+    var totalNum = document.getElementById('totalNum');
+    var prevBtn = document.getElementById('prevBtn');
+    var nextBtn = document.getElementById('nextBtn');
+    var fsBtn = document.getElementById('fsBtn');
+    var deck = document.getElementById('deck');
+    var segBar = document.getElementById('segBar');
+    var segLabel = document.getElementById('segLabel');
+    totalNum.textContent = slides.length;
+    segBar.innerHTML = SECTIONS.map(function() { return '<div class="seg"></div>'; }).join('');
+    var segEls = Array.from(segBar.children);
+    var current = 0;
+
+    function pad(n) {
+      return (n + 1).toString().padStart(2, '0');
+    }
+
+    function renderSlide(i) {
+      var s = slides[i];
+      mount.innerHTML = '<div class="slide"><div class="kicker-row"><div class="slide-icon">' + s.icon + '</div><div class="kicker">' + s.kicker + '</div></div>' + (s.hero ? '' : '<h1 class="slide-title">' + s.title + '</h1>') + '<div class="slide-body">' + s.body + '</div></div>';
+      curNum.textContent = pad(i);
+      segLabel.textContent = SECTIONS[s.section];
+      segEls.forEach(function(el, idx) {
+        el.classList.toggle('done', idx < s.section);
+        el.classList.toggle('active', idx === s.section);
+      });
+      prevBtn.classList.toggle('disabled', i === 0);
+      nextBtn.classList.toggle('disabled', i === slides.length - 1);
+    }
+
+    function goTo(i) {
+      if (i < 0 || i >= slides.length || i === current) return;
+      current = i;
+      mount.classList.add('is-leaving');
+      setTimeout(function() {
+        renderSlide(current);
+        mount.classList.remove('is-leaving');
+        mount.classList.add('is-entering');
+        setTimeout(function() {
+          mount.classList.remove('is-entering');
+        }, 250);
+      }, 160);
+    }
+
+    prevBtn.addEventListener('click', function() { goTo(current - 1); });
+    nextBtn.addEventListener('click', function() { goTo(current + 1); });
+    window.addEventListener('keydown', function(e) {
+      if (['ArrowRight', 'PageDown', ' '].includes(e.key)) { e.preventDefault(); goTo(current + 1); }
+      if (['ArrowLeft', 'PageUp', 'Backspace'].includes(e.key)) { e.preventDefault(); goTo(current - 1); }
+      if (e.key === 'Home') goTo(0);
+      if (e.key === 'End') goTo(slides.length - 1);
+    });
+    fsBtn.addEventListener('click', function() {
+      if (!document.fullscreenElement) {
+        deck.requestFullscreen?.();
+      } else {
+        document.exitFullscreen?.();
+      }
+    });
+    var touchX = null;
+    deck.addEventListener('touchstart', function(e) {
+      touchX = e.touches[0].clientX;
+    });
+    deck.addEventListener('touchend', function(e) {
+      if (touchX === null) return;
+      var dx = e.changedTouches[0].clientX - touchX;
+      if (dx > 40) goTo(current - 1);
+      if (dx < -40) goTo(current + 1);
+      touchX = null;
+    });
+    renderSlide(0);
+  })();
+</script>
+</body>
+</html>
